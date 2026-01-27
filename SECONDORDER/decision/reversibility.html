@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecondOrder — Reversibility</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#0f172a;
+      --muted:#475569;
+      --border:#e5e7eb;
+      --danger:#b91c1c;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Inter,system-ui,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .container{
+      max-width:720px;
+      margin:auto;
+      padding:96px 24px;
+    }
+
+    h1{
+      font-size:2.4rem;
+      margin-bottom:12px;
+    }
+
+    p{
+      color:var(--muted);
+      line-height:1.7;
+      margin-bottom:24px;
+    }
+
+    .options{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      margin-top:24px;
+    }
+
+    label{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:16px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    input[type="radio"]{
+      margin-top:4px;
+    }
+
+    textarea{
+      width:100%;
+      min-height:120px;
+      padding:14px 12px;
+      font-size:1rem;
+      border:1px solid var(--border);
+      border-radius:4px;
+      margin-top:24px;
+      resize:vertical;
+      display:none;
+    }
+
+    .hint{
+      margin-top:16px;
+      font-size:.9rem;
+      color:var(--muted);
+    }
+
+    .error{
+      margin-top:12px;
+      font-size:.9rem;
+      color:var(--danger);
+      display:none;
+    }
+
+    .nav{
+      margin-top:48px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    button{
+      padding:12px 20px;
+      border:1px solid var(--text);
+      background:#fff;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    button:hover{
+      background:var(--text);
+      color:#fff;
+    }
+
+    footer{
+      border-top:1px solid var(--border);
+      padding:24px;
+      text-align:center;
+      color:var(--muted);
+      font-size:.85rem;
+    }
+
+    :focus-visible{
+      outline:2px solid var(--text);
+      outline-offset:3px;
+    }
+  </style>
+<script
+  defer
+  data-domain="YOUR_DOMAIN_HERE"
+  src="https://plausible.io/js/script.js">
+</script>
+
+</head>
+
+<body>
+
+<main>
+  <div class="container">
+
+    <!-- CONTEXT -->
+    <p><strong>Step 9 of 9</strong> — Reversibility</p>
+
+    <h1>If this fails, can you undo it?</h1>
+
+    <p>
+      Reversible decisions invite experimentation.  
+      Irreversible decisions demand accuracy.
+    </p>
+
+    <form id="reversalForm">
+
+      <div class="options">
+
+        <label>
+          <input type="radio" name="reversible" value="Easily reversible">
+          <div>
+            <strong>Easily reversible</strong><br>
+            Low cost, little lasting damage.
+          </div>
+        </label>
+
+        <label>
+          <input type="radio" name="reversible" value="Costly but reversible">
+          <div>
+            <strong>Costly but reversible</strong><br>
+            Recovery is possible, but painful.
+          </div>
+        </label>
+
+        <label>
+          <input type="radio" name="reversible" value="Mostly irreversible">
+          <div>
+            <strong>Mostly irreversible</strong><br>
+            Consequences persist even after reversal.
+          </div>
+        </label>
+
+      </div>
+
+      <textarea
+        id="reversalCost"
+        placeholder="What is lost if reversal is required?
+Examples:
+• time
+• money
+• reputation
+• opportunity"
+      ></textarea>
+
+    </form>
+
+    <div class="hint">
+      Honesty here determines how carefully this decision should be made.
+    </div>
+
+    <div class="error" id="errorMsg">
+      Select a reversibility level and describe the cost.
+    </div>
+
+    <!-- NAV -->
+    <div class="nav">
+      <a href="time.html">← Back</a>
+      <button id="continueBtn">Continue →</button>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Irreversible choices should be rare.
+</footer>
+
+<script>
+  const costInput = document.getElementById("reversalCost");
+  const error = document.getElementById("errorMsg");
+  const btn = document.getElementById("continueBtn");
+
+  const raw = sessionStorage.getItem("decisionState");
+  if(!raw){
+    window.location.href = "start.html";
+  }
+
+  const state = JSON.parse(raw);
+
+  // Restore previous selection
+  if(state.reversibility){
+    const input = document.querySelector(
+      `input[name="reversible"][value="${state.reversibility}"]`
+    );
+    if(input) input.checked = true;
+  }
+
+  if(state.reversalCost){
+    costInput.value = state.reversalCost;
+    costInput.style.display = "block";
+  }
+
+  // Show textarea after selection
+  document.querySelectorAll('input[name="reversible"]').forEach(radio=>{
+    radio.addEventListener("change", ()=>{
+      costInput.style.display = "block";
+    });
+  });
+
+  btn.addEventListener("click", ()=>{
+    const selected = document.querySelector('input[name="reversible"]:checked');
+
+    if(!selected || costInput.value.trim().length === 0){
+      error.style.display = "block";
+      return;
+    }
+
+    error.style.display = "none";
+    state.reversibility = selected.value;
+    state.reversalCost = costInput.value.trim();
+    sessionStorage.setItem("decisionState", JSON.stringify(state));
+
+    window.location.href = "summary.html";
+  });
+</script>
+
+</body>
+</html>
